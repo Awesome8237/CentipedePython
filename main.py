@@ -25,25 +25,41 @@ def checkBulletMushroomCollision(bullets,mushrooms):
 
 def checkCentipedeCollsion(centipede,mushrooms):
 
-    for segment in centipede:
-        if segment['x'] < 0 or segment['x']+32 > 960:
+    #for segment in centipede:
+        if centipede[0]['x'] <= 0 or centipede[0]['x']+32/32 >= 960/32:
 
-            if not segment['movedDown']:
-                segment['movingDown'] = True
-                segment['movingLeft'] = not segment['movingLeft']
+            if not centipede[0]['movedDown']:
+                centipede[0]['movingDown'] = True
+                centipede[0]['movingLeft'] = not centipede[0]['movingLeft']
 
 
         else:
             for mushroom in mushrooms:
-                if mushroom['exists'] and segment['x'] < mushroom['x'] + 32 and segment['x'] + 32 > mushroom['x'] and segment['y'] + 32 > mushroom['y'] and segment['y'] < mushroom['y'] + 32:
-                    if not segment['movedDown']:
-                        segment['movingDown'] = True
-                        segment['movingLeft'] = not segment['movingLeft']
+                if mushroom['exists'] and centipede[0]['x']*32 <= mushroom['x'] + 32 and (centipede[0]['x']*32) + 32 >= mushroom['x'] and (centipede[0]['y']*32) + 32 > mushroom['y'] and (centipede[0]['y']*32) < mushroom['y'] + 32:
+                    if not centipede[0]['movedDown']:
+                        centipede[0]['movingDown'] = True
+                        centipede[0]['movingLeft'] = not centipede[0]['movingLeft']
 
-        if not segment['movingDown']:
-            segment['movedDown'] = False
+        if not centipede[0]['movingDown']:
+            centipede[0]['movedDown'] = False
+
+def checkCentipedeBulletCollision(bullets,centipede):
+
+    for bull in bullets:
+        for segment in centipede:
+            if segment['exists'] and bull['x'] <= segment['x']*32 + 32 and bull['x'] + 32 >= segment['x']*32 and bull['y'] <= segment['y']*32 + 32 and segment['y']*32 <= bull['y'] + 32:
+                bullets.remove(bull)
+                segment['exists'] = False
+                centipede[centipede.index(segment)+1]['head'] = True
+                centipede[centipede.index(segment) + 1]['split'] = True
 
 
+
+
+
+
+
+#test to see if this works
 
 pygame.init()
 
@@ -55,7 +71,7 @@ clock = pygame.time.Clock()
 
 speedClock = pygame.time.Clock()
 
-speed = 0.5
+speed = 150
 
 player_x = 960/2
 player_y = 960/2
@@ -66,12 +82,12 @@ mushrooms = []
 
 centipede = []
 
-head = {'exists': True, 'x': 10*32, 'y': 0, 'head': True, 'movingLeft': True, 'movingDown': False, 'movedDown': False}
+head = {'exists': True, 'x': 10, 'y': 0, 'head': True, 'movingLeft': True, 'movingDown': False, 'movedDown': False, 'split': False}
 
 centipede.append(head)
 
 for i in range(11):
-    segment = {'exists': True, 'x': (10+i+1)*32, 'y': 0, 'head': False, 'movingLeft': True, 'movingDown': False, 'movedDown': False}
+    segment = {'exists': True, 'x': 10+i+1, 'y': 0, 'head': False, 'movingLeft': True, 'movingDown': False, 'movedDown': False, 'split': False}
     centipede.append(segment)
 
 
@@ -128,6 +144,9 @@ body_surface.set_colorkey((0,0,0))
 
 player_speed = 5
 
+dt = 0
+
+start_time = pygame.time.get_ticks()
 #----------------------------------GAME LOOP---------------------------------#
 
 while True:
@@ -157,46 +176,55 @@ while True:
         player_y += player_speed
 
 #----------------------Bullet movement-------------------------#
+
+    checkCentipedeBulletCollision(bullets, centipede)
+
     for bullet in bullets:
         if bullet["y"] < 0:
             bullets.remove(bullet)
         else:
             bullet["y"] -= 10
 
+
     checkBulletMushroomCollision(bullets, mushrooms)
 
 
+    end_time = pygame.time.get_ticks()
 
-    # for i in range(11,0,-1):
-    #
-    #     if centipede[i]['exists']:
-    #         if centipede[0]['movingLeft']:
-    #             centipede[i]['x'] = centipede[i-1]['x']
+    dt = end_time - start_time
+
+    if dt > speed:
+        start_time = pygame.time.get_ticks()
+        for i in range(11,0,-1):
+
+            if centipede[i]['exists']:
+                if centipede[0]['movingLeft']:
+                    centipede[i]['x'] = centipede[i-1]['x']
+                else:
+                    centipede[i]['x'] = centipede[i-1]['x']
+                centipede[i]['y'] = centipede[i-1]['y']
+
+        if centipede[0]['movingDown']:
+            centipede[0]['y'] += 1
+            centipede[0]['movingDown'] = False
+            centipede[0]['movedDown'] = True
+        elif centipede[0]['movingLeft']:
+            centipede[0]['x'] -= 1
+        else:
+            centipede[0]['x'] += 1
+
+        checkCentipedeCollsion(centipede, mushrooms)
+
+    # for segment in centipede:
+    #     if segment['exists']:
+    #         if segment['movingDown']:
+    #             segment['y'] += 32
+    #             segment['movingDown'] = False
+    #             segment['movedDown'] = True
+    #         elif segment['movingLeft']:
+    #             segment['x'] -= 3.2
     #         else:
-    #             centipede[i]['x'] = centipede[i-1]['x']
-    #             # centipede[i]['y'] = centipede[i-1]['y']
-    #
-    # # if centipede[0]['movingDown']:
-    # #     centipede[0]['y'] += 32
-    # #     centipede[0]['movingDown'] = False
-    # #     centipede[0]['movedDown'] = True
-    # if centipede[0]['movingLeft']:
-    #     centipede[0]['x'] -= 3
-    # else:
-    #     centipede[0]['x'] += 3
-
-    checkCentipedeCollsion(centipede, mushrooms)
-
-    for segment in centipede:
-        if segment['exists']:
-            if segment['movingDown']:
-                segment['y'] += 32
-                segment['movingDown'] = False
-                segment['movedDown'] = True
-            elif segment['movingLeft']:
-                segment['x'] -= 3.2
-            else:
-                segment['x'] += 3.2
+    #             segment['x'] += 3.2
 
 
 
@@ -224,18 +252,18 @@ while True:
     for segment in centipede:
         if segment['head'] and segment['exists']:
             if segment['movingLeft']:
-                screen.blit(head_surface, (segment["x"], segment["y"]))
+                screen.blit(head_surface, (segment["x"]*32, segment["y"]*32))
             else:
                 flipped_head = pygame.transform.flip(head_surface,True, False)
                 flipped_head.set_colorkey((0,0,0))
-                screen.blit(flipped_head,(segment["x"], segment["y"]))
-        elif not segment['head']:
+                screen.blit(flipped_head,(segment["x"]*32, segment["y"]*32))
+        elif not segment['head'] and segment['exists']:
             if segment['movingLeft']:
-                screen.blit(body_surface, (segment["x"], segment["y"]))
+                screen.blit(body_surface, (segment["x"]*32, segment["y"]*32))
             else:
                 flipped_body = pygame.transform.flip(body_surface,True, False)
                 flipped_body.set_colorkey((0,0,0))
-                screen.blit(flipped_body,(segment["x"], segment["y"]))
+                screen.blit(flipped_body,(segment["x"]*32, segment["y"]*32))
 
 
     for bullet in bullets:
