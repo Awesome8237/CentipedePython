@@ -27,15 +27,22 @@ def checkCentipedeCollsion(centipede,mushrooms):
 
     for segment in centipede:
         if segment['x'] < 0 or segment['x']+32 > 960:
-            if centipede[centipede.index(segment) - 1]['exists'] and abs(centipede[centipede.index(segment) - 1]['x'] - segment['x']) >= 32:
-                segment['movingDown'] = True
 
+            if not segment['movedDown']:
+                segment['movingDown'] = True
                 segment['movingLeft'] = not segment['movingLeft']
+
+
         else:
             for mushroom in mushrooms:
                 if mushroom['exists'] and segment['x'] < mushroom['x'] + 32 and segment['x'] + 32 > mushroom['x'] and segment['y'] + 32 > mushroom['y'] and segment['y'] < mushroom['y'] + 32:
-                    segment['movingDown'] = True
-                    segment['movingLeft'] = not segment['movingLeft']
+                    if not segment['movedDown']:
+                        segment['movingDown'] = True
+                        segment['movingLeft'] = not segment['movingLeft']
+
+        if not segment['movingDown']:
+            segment['movedDown'] = False
+
 
 
 pygame.init()
@@ -46,6 +53,10 @@ screen = pygame.display.set_mode((960,960),pygame.SCALED | pygame.FULLSCREEN)
 
 clock = pygame.time.Clock()
 
+speedClock = pygame.time.Clock()
+
+speed = 0.5
+
 player_x = 960/2
 player_y = 960/2
 
@@ -55,12 +66,12 @@ mushrooms = []
 
 centipede = []
 
-head = {'exists': True, 'x': 10*32, 'y': 0, 'head': True, 'movingLeft': True, 'movingDown': False}
+head = {'exists': True, 'x': 10*32, 'y': 0, 'head': True, 'movingLeft': True, 'movingDown': False, 'movedDown': False}
 
 centipede.append(head)
 
 for i in range(11):
-    segment = {'exists': True, 'x': (10+i+1)*32, 'y': 0, 'head': False, 'movingLeft': True, 'movingDown': False}
+    segment = {'exists': True, 'x': (10+i+1)*32, 'y': 0, 'head': False, 'movingLeft': True, 'movingDown': False, 'movedDown': False}
     centipede.append(segment)
 
 
@@ -70,17 +81,17 @@ for row in range(30):
         mushroom = {'exists': False, 'x': column*32, 'y': row*32}
         mushrooms.append(mushroom)
 
-# mushroom_num = random.randint(20,30)
-#
-# placed = False
-#
-# for item in range(mushroom_num):
-#     placed = False
-#     while not placed:
-#         position = random.randint(0, len(mushrooms))
-#         if not mushrooms[position]['exists'] and position > 30:
-#             mushrooms[position]['exists'] = True
-#             placed = True
+mushroom_num = random.randint(20,30)
+
+placed = False
+
+for item in range(mushroom_num):
+    placed = False
+    while not placed:
+        position = random.randint(0, len(mushrooms))
+        if not mushrooms[position]['exists'] and position > 30:
+            mushrooms[position]['exists'] = True
+            placed = True
 
 
 
@@ -153,20 +164,53 @@ while True:
             bullet["y"] -= 10
 
     checkBulletMushroomCollision(bullets, mushrooms)
+
+
+
+    # for i in range(11,0,-1):
+    #
+    #     if centipede[i]['exists']:
+    #         if centipede[0]['movingLeft']:
+    #             centipede[i]['x'] = centipede[i-1]['x']
+    #         else:
+    #             centipede[i]['x'] = centipede[i-1]['x']
+    #             # centipede[i]['y'] = centipede[i-1]['y']
+    #
+    # # if centipede[0]['movingDown']:
+    # #     centipede[0]['y'] += 32
+    # #     centipede[0]['movingDown'] = False
+    # #     centipede[0]['movedDown'] = True
+    # if centipede[0]['movingLeft']:
+    #     centipede[0]['x'] -= 3
+    # else:
+    #     centipede[0]['x'] += 3
+
     checkCentipedeCollsion(centipede, mushrooms)
 
     for segment in centipede:
-        if segment["exists"]:
-            if segment["movingDown"]:
+        if segment['exists']:
+            if segment['movingDown']:
                 segment['y'] += 32
-
-
-
-                segment["movingDown"] = False
-            elif segment["movingLeft"]:
-                segment['x'] -= 3
+                segment['movingDown'] = False
+                segment['movedDown'] = True
+            elif segment['movingLeft']:
+                segment['x'] -= 3.2
             else:
-                segment['x'] += 3
+                segment['x'] += 3.2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #------------------------------- DRAWING --------------------------------#
